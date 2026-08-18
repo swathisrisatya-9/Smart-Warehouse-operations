@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartWarehouse AI | Intelligent Warehouse Operations & Fulfillment</title>
+  <meta name="description" content="Production-grade Smart Warehouse Operations & Order Fulfillment System with explainable automated decision-making and inventory intelligence.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modules.css">
+
+  <!-- Chart.js CDN for High-Performance Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- ==========================================
+         SIDEBAR NAVIGATION
+         ========================================== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-info">
+          <div class="brand-title">
+            SmartWarehouse
+            <span class="brand-badge">AI</span>
+          </div>
+          <div class="brand-subtitle">Autonomous Fulfillment OS</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Core Operations</div>
+        
+        <a class="nav-item active" data-target="dashboard" id="nav-dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+
+        <a class="nav-item" data-target="inventory" id="nav-inventory">
+          <span class="nav-icon">📦</span>
+          <span>Inventory & Bins</span>
+        </a>
+
+        <a class="nav-item" data-target="orders" id="nav-orders">
+          <span class="nav-icon">📋</span>
+          <span>Order Management</span>
+          <span class="badge badge-warning nav-badge" id="nav-badge-orders">SLA</span>
+        </a>
+
+        <a class="nav-item" data-target="allocation" id="nav-allocation">
+          <span class="nav-icon">🧠</span>
+          <span>Allocation Engine</span>
+          <span class="badge badge-critical nav-badge">Core</span>
+        </a>
+
+        <div class="nav-section-title">Execution & Floor</div>
+
+        <a class="nav-item" data-target="pick-pack" id="nav-pick-pack">
+          <span class="nav-icon">⚡</span>
+          <span>Picking & Packing</span>
+        </a>
+
+        <a class="nav-item" data-target="reorder" id="nav-reorder">
+          <span class="nav-icon">📈</span>
+          <span>Smart Reorder</span>
+          <span class="badge badge-warning nav-badge">Low</span>
+        </a>
+
+        <a class="nav-item" data-target="exceptions" id="nav-exceptions">
+          <span class="nav-icon">🚨</span>
+          <span>Damaged & Missing</span>
+          <span class="badge badge-critical nav-badge">Alert</span>
+        </a>
+
+        <a class="nav-item" data-target="qc-dispatch" id="nav-qc-dispatch">
+          <span class="nav-icon">🚚</span>
+          <span>QC & Dispatch</span>
+        </a>
+
+        <div class="nav-section-title">Intelligence</div>
+
+        <a class="nav-item" data-target="analytics" id="nav-analytics">
+          <span class="nav-icon">📉</span>
+          <span>Bottleneck Analytics</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="role-badge-box">
+          <div class="role-text">
+            <span style="font-size: 0.7rem; color: var(--text-muted);">SIMULATED ROLE</span>
+            <span class="role-title" id="current-role-badge">Warehouse Manager</span>
+          </div>
+          <select id="role-select-dropdown" class="select" style="width: auto; padding: 2px 6px; font-size: 0.75rem;">
+            <option value="manager">Manager</option>
+            <option value="picker">Picker / QC</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==========================================
+         MAIN CONTENT SHELL
+         ========================================== -->
+    <main class="app-main">
+      
+      <!-- Top Application Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <div class="header-title-container">
+            <h1 class="view-title" id="view-current-title">Executive Dashboard & Operations Hub</h1>
+            <div class="live-status-pill">
+              <span class="live-pulse-dot"></span>
+              <span>LIVE SYSTEM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Global Search Trigger -->
+          <button class="search-trigger-btn" id="btn-global-search" title="Press Ctrl+K to search">
+            <span>🔍 Search orders, SKUs, bins...</span>
+            <span class="kbd-shortcut">Ctrl+K</span>
+          </button>
+
+          <!-- Interactive Judge Demo Scenarios Dropdown -->
+          <select id="demo-scenario-select" class="select" style="width: 175px; font-size: 0.8rem; background: var(--bg-tertiary); border-color: rgba(99, 102, 241, 0.4);">
+            <option value="">⚡ Demo Scenarios...</option>
+            <option value="surge">🔥 1. Black Friday SLA Surge</option>
+            <option value="stockout">⚠️ 2. Trigger Stockout Shortfall</option>
+            <option value="damage">🚨 3. Damaged Item in Picking</option>
+            <option value="bottleneck">⏱️ 4. Severe Packing Bottleneck</option>
+            <option value="reset">🔄 5. Reset to Default State</option>
+          </select>
+
+          <!-- Live Heartbeat Clock -->
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-muted); background: var(--bg-tertiary); padding: 4px 8px; border-radius: var(--radius-sm);" id="live-sim-clock">
+            11:30:00 AM
+          </div>
+
+          <!-- Theme Toggle -->
+          <button class="btn btn-secondary btn-icon" id="btn-toggle-theme" title="Toggle Light/Dark Theme">
+            🌙
+          </button>
+
+          <!-- Notifications Bell -->
+          <div style="position: relative;">
+            <button class="btn btn-secondary btn-icon" id="btn-notification-bell" title="System Alerts">
+              🔔
+            </button>
+            <span class="nav-badge badge-critical" id="notif-unread-badge" style="position: absolute; top: -4px; right: -4px; padding: 1px 5px; font-size: 0.65rem;">
+              3
+            </span>
+          </div>
+
+          <!-- Decision Assistant Trigger -->
+          <button class="btn btn-primary" id="btn-toggle-assistant" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));">
+            <span class="assistant-spark-icon">✨</span>
+            <span>AI Copilot</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Module Container -->
+      <div class="app-content">
+
+        <!-- ==========================================
+             MODULE 1: DASHBOARD
+             ========================================== -->
+        <section class="module-view active" id="view-dashboard">
+          <!-- Top KPI Metrics -->
+          <div class="grid-cards">
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Active Orders</span>
+                <div class="kpi-icon-box kpi-icon-blue">📦</div>
+              </div>
+              <div class="kpi-value" id="kpi-total-orders">7</div>
+              <div class="kpi-bottom">
+                <span class="kpi-badge badge-success">↑ 12%</span> vs yesterday
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Pending Allocation</span>
+                <div class="kpi-icon-box kpi-icon-purple">⏳</div>
+              </div>
+              <div class="kpi-value" id="kpi-pending-orders">3</div>
+              <div class="kpi-bottom">Awaiting stock resolution</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Stockout / Low Stock</span>
+                <div class="kpi-icon-box kpi-icon-amber">⚠️</div>
+              </div>
+              <div class="kpi-value" id="kpi-low-stock" style="color: var(--status-warning);">4</div>
+              <div class="kpi-bottom">PO recommendations active</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">SLA Breach Risk (&lt;2h)</span>
+                <div class="kpi-icon-box kpi-icon-red">🚨</div>
+              </div>
+              <div class="kpi-value" id="kpi-sla-risk" style="color: var(--status-critical);">2</div>
+              <div class="kpi-bottom">VIP Priority Escalated</div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid-2col">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Order Status Distribution</div>
+                  <div class="card-subtitle">Real-time fulfillment stages across active batches</div>
+                </div>
+              </div>
+              <div style="height: 240px; position: relative;">
+                <canvas id="chart-order-status"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Hourly Dispatch Velocity vs Target</div>
+                  <div class="card-subtitle">Units dispatched per hour compared to SLA threshold</div>
+                </div>
+              </div>
+              <div style="height: 240px; position: relative;">
+                <canvas id="chart-fulfillment-trend"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Needed Panel & Top SKUs -->
+          <div class="grid-3col">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🚨 System Action Needed & Decision Queue</div>
+                  <div class="card-subtitle">Urgent operational decisions requiring manager review or automated execution</div>
+                </div>
+              </div>
+              <div id="dashboard-action-needed-list">
+                <!-- Action Cards injected via JS -->
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🔥 High-Velocity SKUs</div>
+                  <div class="card-subtitle">Fastest moving products today</div>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Bin</th>
+                      <th>Avail</th>
+                      <th>Velocity</th>
+                      <th>Health</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-top-skus-body">
+                    <!-- Top SKUs injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 2: INVENTORY & STOCK MONITORING
+             ========================================== -->
+        <section class="module-view" id="view-inventory">
+          <div class="card" style="margin-bottom: 1.25rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+              <div style="display: flex; gap: 0.75rem; flex: 1; min-width: 280px;">
+                <input type="text" class="input input-search" id="inventory-search-input" placeholder="Search SKU, name, or bin location...">
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <select class="select" id="inventory-category-filter" style="width: 150px;">
+                  <option value="all">All Categories</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Apparel">Apparel</option>
+                  <option value="Home Goods">Home Goods</option>
+                  <option value="Perishable">Perishable</option>
+                </select>
+                <select class="select" id="inventory-health-filter" style="width: 150px;">
+                  <option value="all">All Stock Health</option>
+                  <option value="healthy">Healthy Only</option>
+                  <option value="low">Low Stock Only</option>
+                  <option value="critical">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Catalog Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Warehouse Master Inventory Catalog</div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Product & Dimensions</th>
+                    <th>Category</th>
+                    <th>Available / Total</th>
+                    <th>Reserved</th>
+                    <th>Bin Location</th>
+                    <th>Health</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Warehouse Bin Grid Visual Map -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🗺️ Interactive Warehouse Zone & Bin Map</div>
+                <div class="card-subtitle">Real-time bin capacity and SKU cluster allocation</div>
+              </div>
+            </div>
+            <div class="bin-grid-container" id="inventory-bin-grid">
+              <!-- Bins injected via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 3: ORDER MANAGEMENT & PRIORITIZATION
+             ========================================== -->
+        <section class="module-view" id="view-orders">
+          <div class="card" style="margin-bottom: 1.25rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+              <div style="flex: 1; min-width: 260px;">
+                <input type="text" class="input input-search" id="orders-search-input" placeholder="Search orders, customers, or SKUs...">
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <select class="select" id="orders-status-filter" style="width: 170px;">
+                  <option value="all">All Order Statuses</option>
+                  <option value="Pending Allocation">Pending Allocation</option>
+                  <option value="Picking">Picking</option>
+                  <option value="Packing">Packing</option>
+                  <option value="Quality Check">Quality Check</option>
+                  <option value="Dispatched">Dispatched</option>
+                  <option value="Exception">Exceptions</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Order Fulfillment Queue & Auto-Priority Engine</div>
+                <div class="card-subtitle">Scores calculated in real-time based on SLA urgency, VIP tiers, order value, and stock risk</div>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Score / Order ID</th>
+                    <th>Customer & Tier</th>
+                    <th>Items & Value</th>
+                    <th>SLA Deadline</th>
+                    <th>Status</th>
+                    <th>Priority Logic Rationale</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 4: INVENTORY ALLOCATION ENGINE
+             ========================================== -->
+        <section class="module-view" id="view-allocation">
+          <div id="allocation-scarcity-banner" style="margin-bottom: 1.25rem;">
+            <!-- Scarcity banner injected via JS -->
+          </div>
+
+          <div class="grid-3col">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">⚡ Allocation Engine Execution Matrix</div>
+                  <div class="card-subtitle">Rules-based stock reservations, shortfall detections, and resolution triggers</div>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Order Rank</th>
+                      <th>Customer</th>
+                      <th>Score</th>
+                      <th>Line Item Allocations</th>
+                      <th>Outcome</th>
+                      <th>Resolution Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allocation-table-body">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📜 Allocation Decision Log</div>
+                  <div class="card-subtitle">Plain-English reasoning audit trail</div>
+                </div>
+              </div>
+              <div id="allocation-decision-logs-list" style="max-height: 580px; overflow-y: auto;">
+                <!-- Decision logs injected via JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 5: PICKING & PACKING MANAGEMENT
+             ========================================== -->
+        <section class="module-view" id="view-pick-pack">
+          <!-- Route Visualizer -->
+          <div class="route-visualizer">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <div>
+                <strong style="font-size: 1rem; color: var(--text-primary);">🧭 Active Wave Route Optimizer (WAVE-BCH-04)</strong>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">Floor path sequenced to minimize picker walking distance</div>
+              </div>
+              <span class="badge badge-success">✓ 480m Distance Saved (42% Faster)</span>
+            </div>
+            <div class="route-steps-container" id="pick-route-steps">
+              <!-- Route nodes injected via JS -->
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">👷 Floor Pickers & Workload Balancing</div>
+              </div>
+              <div id="pickers-assignment-list">
+                <!-- Pickers injected via JS -->
+              </div>
+            </div>
+
+            <div class="packing-station-box" id="packing-station-container">
+              <!-- Packing checklist injected via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 6: SMART REORDER ENGINE
+             ========================================== -->
+        <section class="module-view" id="view-reorder">
+          <div class="grid-cards" id="reorder-alert-summary">
+            <!-- Alert summary cards injected via JS -->
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Dynamic Demand Velocity & Predicted Stockout Dates</div>
+                <div class="card-subtitle">Reorder recommendations calculated from 30-day velocity run-rates and supplier lead times</div>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Product & SKU</th>
+                    <th>Current Stock</th>
+                    <th>Demand Velocity</th>
+                    <th>Days Remaining</th>
+                    <th>Recommended PO Qty</th>
+                    <th>Urgency Diagnosis</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="reorder-table-body">
+                  <!-- Reorder rows injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 7: EXCEPTIONS & DAMAGED GOODS
+             ========================================== -->
+        <section class="module-view" id="view-exceptions">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+              <h2 style="font-size: 1.1rem; font-weight: 700;">Damaged / Missing Item Exception Log</h2>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">Real-time tracking of picking defects, write-offs, and customer recovery workflows</div>
+            </div>
+            <button class="btn btn-danger" onclick="ExceptionsModule.openReportModal()">
+              🚨 Report Damaged / Missing Item
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Exception ID</th>
+                    <th>Origin / Order</th>
+                    <th>Product / SKU</th>
+                    <th>Qty & Reason</th>
+                    <th>Status</th>
+                    <th>System Recommendation</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="exceptions-table-body">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 8: QC & DISPATCH TRACKING
+             ========================================== -->
+        <section class="module-view" id="view-qc-dispatch">
+          <div class="grid-2col">
+            <div class="card" id="qc-inspection-card">
+              <!-- QC card injected via JS -->
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🚚 Outbound Dispatch Queue</div>
+                  <div class="card-subtitle">Carrier assignments and tracking ID generation</div>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Customer & Address</th>
+                      <th>Carrier</th>
+                      <th>Tracking Number</th>
+                      <th>Status</th>
+                      <th>Label</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dispatch-table-body">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             MODULE 9: OPERATIONAL ANALYTICS & BOTTLENECK
+             ========================================== -->
+        <section class="module-view" id="view-analytics">
+          <!-- Bottleneck Banner -->
+          <div id="analytics-bottleneck-banner">
+            <!-- Injected via JS -->
+          </div>
+
+          <!-- Stage Metrics Grid -->
+          <div class="grid-cards" id="analytics-stage-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+            <!-- Stage cards injected via JS -->
+          </div>
+
+          <div class="grid-2col">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Stage Cycle Time vs SLA Benchmark</div>
+                  <div class="card-subtitle">Dwell times identifying fulfillment bottlenecks</div>
+                </div>
+              </div>
+              <div style="height: 250px; position: relative;">
+                <canvas id="chart-stage-dwell"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <div>
+                    <div class="card-title">🏆 Picker Productivity Leaderboard</div>
+                    <div class="card-subtitle">Floor speed and accuracy performance</div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="AnalyticsModule.exportCSVReport()">
+                    📥 Export CSV
+                  </button>
+                </div>
+              </div>
+              <div id="analytics-leaderboard-body">
+                <!-- Leaderboard injected via JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ==========================================
+         DECISION ASSISTANT COPILOT (Side Drawer)
+         ========================================== -->
+    <div class="decision-assistant-drawer" id="decision-assistant-drawer">
+      <div class="assistant-header">
+        <div class="assistant-title-box">
+          <span class="assistant-spark-icon">✨</span>
+          <span>Decision Assistant Copilot</span>
+        </div>
+        <button class="btn btn-ghost btn-icon" id="btn-close-assistant">✕</button>
+      </div>
+      <div class="assistant-body" id="copilot-recommendations-list">
+        <!-- AI Recommendations injected via JS -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         NOTIFICATION POPOVER DROPDOWN
+         ========================================== -->
+    <div class="notification-popover" id="notification-popover">
+      <div class="notif-header">
+        <span>System Alert Center</span>
+        <button class="btn btn-ghost btn-sm" id="btn-mark-all-read" style="font-size: 0.72rem;">Mark all read</button>
+      </div>
+      <div class="notif-list" id="notif-list-container">
+        <!-- Notifications injected via JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       MODALS & DIALOGS
+       ========================================== -->
+
+  <!-- Global Search Modal (Ctrl+K) -->
+  <div class="modal-overlay" id="modal-global-search">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+          <span>🔍</span>
+          <input type="text" id="global-search-input" class="input" placeholder="Type to search orders, SKUs, bins, exceptions..." style="border: none; background: transparent; font-size: 1rem;">
+        </div>
+        <button class="btn btn-ghost btn-icon" id="btn-close-search" data-close-modal>✕</button>
+      </div>
+      <div class="modal-body" id="global-search-results" style="max-height: 400px; padding: 0.75rem;">
+        <!-- Results injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail & 9-Stage Stepper Modal -->
+  <div class="modal-overlay" id="modal-order-detail">
+    <div class="modal-dialog" style="max-width: 720px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-order-detail-title">Order Lifecycle Details</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <div class="modal-body" id="modal-order-detail-body">
+        <!-- Injected via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Movement History Modal -->
+  <div class="modal-overlay" id="modal-stock-history">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-history-title">Stock Movement Audit Trail</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <div class="modal-body" id="modal-history-content">
+        <!-- Injected via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Adjustment Modal -->
+  <div class="modal-overlay" id="modal-stock-adjust">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">Manual Stock Adjustment</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="InventoryModule.submitAdjustment(event)">
+        <div class="modal-body">
+          <input type="hidden" id="adjust-sku-val">
+          <div class="form-group">
+            <label class="form-label">Product:</label>
+            <strong id="adjust-name-val" style="color: var(--accent-cyan);"></strong>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Current Stock Level:</label>
+            <span id="adjust-curr-val"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Adjustment Delta (+/- units):</label>
+            <input type="number" id="adjust-delta-val" class="input" placeholder="e.g. +20 or -5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason / Justification:</label>
+            <input type="text" id="adjust-reason-val" class="input" placeholder="e.g. Cycle count variance, damaged carton, supplier return" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Adjustment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manual Priority Override Modal -->
+  <div class="modal-overlay" id="modal-priority-override">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">Manual Priority Override</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="OrdersModule.submitOverride(event)">
+        <div class="modal-body">
+          <input type="hidden" id="override-order-id">
+          <div class="form-group">
+            <label class="form-label">Order:</label>
+            <strong id="override-order-info" style="color: var(--accent-primary);"></strong>
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Priority Score (1 - 100):</label>
+            <input type="number" min="1" max="100" id="override-score-input" class="input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Logged Reason for Override:</label>
+            <textarea id="override-reason-input" class="textarea" rows="3" placeholder="e.g. Executive escalation by VP of Sales for urgent VIP delivery" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Apply Override</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Substitute SKU Modal -->
+  <div class="modal-overlay" id="modal-substitute-sku">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title">Apply Alternative Substitute SKU</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="AllocationModule.submitSubstitute(event)">
+        <div class="modal-body">
+          <input type="hidden" id="substitute-order-id">
+          <input type="hidden" id="substitute-old-sku">
+          <p id="substitute-sku-desc" style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;"></p>
+          <div class="form-group">
+            <label class="form-label">Select In-Stock Replacement SKU:</label>
+            <select id="substitute-new-sku-select" class="select" required></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm & Update Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Generate PO Replenishment Modal -->
+  <div class="modal-overlay" id="modal-generate-po">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">Generate Inbound Purchase Order</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="ReorderModule.submitPO(event)">
+        <div class="modal-body">
+          <input type="hidden" id="po-sku-val">
+          <div class="form-group">
+            <label class="form-label">Product:</label>
+            <strong id="po-product-name" style="color: var(--accent-cyan);"></strong>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Supplier:</label>
+            <span id="po-supplier-val" style="color: var(--text-primary); font-weight: 600;"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Quantity (Units):</label>
+            <input type="number" id="po-qty-input" class="input" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total Estimated Cost:</label>
+            <strong id="po-total-cost" style="color: var(--status-success); font-size: 1.1rem;"></strong>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">⚡ Send PO & Receive Inbound</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Damaged / Missing Exception Modal -->
+  <div class="modal-overlay" id="modal-report-exception">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title">Report Damaged / Missing Stock</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="ExceptionsModule.submitException(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Associated Order (Optional):</label>
+            <select id="report-exc-order-id" class="select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Defective / Missing Product SKU:</label>
+            <select id="report-exc-sku" class="select" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity Affected:</label>
+            <input type="number" id="report-exc-qty" class="input" min="1" value="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Defect Type / Incident Cause:</label>
+            <select id="report-exc-reason" class="select" required>
+              <option value="Damaged in Bin (Crushed Packaging)">Damaged in Bin (Crushed Packaging)</option>
+              <option value="Forklift Collision During Transfer">Forklift Collision During Transfer</option>
+              <option value="Defective Manufacturing Seal">Defective Manufacturing Seal</option>
+              <option value="Item Missing / Count Discrepancy">Item Missing / Count Discrepancy</option>
+              <option value="Water / Moisture Damage">Water / Moisture Damage</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reported By:</label>
+            <input type="text" id="report-exc-reporter" class="input" value="Elena Rostova (PICK-02)">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-danger">Submit Exception Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Resolve Exception Modal -->
+  <div class="modal-overlay" id="modal-resolve-exception">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">Resolve Exception & Update Inventory</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <form onsubmit="ExceptionsModule.submitResolution(event)">
+        <div class="modal-body">
+          <input type="hidden" id="resolve-exc-id">
+          <p id="resolve-exc-desc" style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 1rem;"></p>
+          <div class="form-group">
+            <label class="form-label">Resolution Action Taken:</label>
+            <select id="resolve-exc-action" class="select" required>
+              <option value="Quarantined damaged unit for RMA return & allocated replacement from reserve shelf">Quarantined unit & allocated replacement from reserve</option>
+              <option value="Authorized split shipment without damaged item">Authorized split shipment without damaged item</option>
+              <option value="Applied customer discount and substituted similar SKU">Applied customer discount and substituted similar SKU</option>
+              <option value="Inventory written off; PO triggered for stock replenishment">Inventory written off; PO triggered for stock replenishment</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Mark as Resolved</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Printable Shipping Label Modal -->
+  <div class="modal-overlay" id="modal-shipping-label">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Carrier Shipping Barcode Label</div>
+        <button class="btn btn-ghost btn-icon" data-close-modal>✕</button>
+      </div>
+      <div class="modal-body" id="shipping-label-container">
+        <!-- Label injected via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Close</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print Label</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ==========================================
+       JAVASCRIPT MODULES & BOOTSTRAP
+       ========================================== -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  
+  <!-- Algorithmic Engines -->
+  <script src="js/engine/priority-engine.js"></script>
+  <script src="js/engine/allocation-engine.js"></script>
+  <script src="js/engine/reorder-engine.js"></script>
+  <script src="js/engine/bottleneck-engine.js"></script>
+
+  <!-- Interactive Modules -->
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/inventory.js"></script>
+  <script src="js/modules/orders.js"></script>
+  <script src="js/modules/allocation.js"></script>
+  <script src="js/modules/pick-pack.js"></script>
+  <script src="js/modules/reorder.js"></script>
+  <script src="js/modules/exceptions.js"></script>
+  <script src="js/modules/qc-dispatch.js"></script>
+  <script src="js/modules/analytics.js"></script>
+
+  <!-- Differentiator Components -->
+  <script src="js/components/decision-assistant.js"></script>
+  <script src="js/components/notifications.js"></script>
+  <script src="js/components/global-search.js"></script>
+  <script src="js/components/role-switcher.js"></script>
+  <script src="js/components/demo-scenarios.js"></script>
+
+  <!-- Application Bootstrap -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
